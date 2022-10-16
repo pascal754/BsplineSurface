@@ -1,7 +1,7 @@
-//import std.core;
 import <iostream>;
 import <vector>;
 import <format>;
+import <stdexcept>;
 
 import Point3d;
 import BsplineSurface;
@@ -74,24 +74,37 @@ void display()
 
 int main(int argc, char* argv[])
 {
-	std::vector<Point3d> vp0{ {50, -30, 10}, {20, -30, 10}, {0, -30, 20}, {-20, -30, 20} };
-	std::vector<Point3d> vp1{ {50, 10, 10}, {20, 10, 10}, {0, 10, 20}, {-20, 10, 20} };
-	std::vector<Point3d> vp2{ {50, 30, 0}, {20, 30, 0}, {0, 30, 10}, {-20, 30, 10} };
-	std::vector<Point3d> vp3{ {50, 50, 0 }, { 20, 50, 0 }, {0, 50, 10}, {-20, 50, 10} };
-	std::vector<Point3d> vp4{ {50, 60, 0}, {20, 60, 0}, {0, 60, 10}, {-20, 60, 10} };
+	try
+	{
+		std::vector<Point3d> vp0{ {50, -30, 10}, {20, -30, 10}, {0, -30, 30}, {-20, -30, 30} };
+		std::vector<Point3d> vp1{ {50, 10, 10}, {20, 10, 10}, {0, 10, 30}, {-20, 10, 30} };
+		std::vector<Point3d> vp2{ {50, 30, 0}, {20, 30, 0}, {0, 30, 10}, {-20, 30, 10} };
+		std::vector<Point3d> vp3{ {50, 50, 0 }, { 20, 50, 0 }, {0, 50, 10}, {-20, 50, 10} };
+		std::vector<Point3d> vp4{ {50, 60, 0}, {20, 60, 0}, {0, 60, 10}, {-20, 60, 10} };
 
-	bs00.addVector(vp0);
-	bs00.addVector(vp1);
-	bs00.addVector(vp2);
-	bs00.addVector(vp3);
-	bs00.addVector(vp4);
-	bs00.makeKnots();
+		bs00.addVector(vp0);
+		bs00.addVector(vp1);
+		bs00.addVector(vp2);
+		bs00.addVector(vp3);
+		bs00.addVector(vp4);
+		bs00.makeKnots();
 
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(640, 480);
-	glutCreateWindow("Special key");
-	glutDisplayFunc(display);
-	glutTimerFunc(0, timer, 0);
-	glutMainLoop();
+		glutInit(&argc, argv);
+		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+		glutInitWindowSize(640, 480);
+		glutCreateWindow("Special key");
+		glutDisplayFunc(display);
+		glutTimerFunc(0, timer, 0);
+		glutMainLoop();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return 1;
+	}
+	catch (...)
+	{
+		std::cerr << "something wrong\n";
+		return 1;
+	}
 }

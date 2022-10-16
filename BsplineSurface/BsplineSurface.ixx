@@ -21,8 +21,8 @@ private:
 	int p_degree{}; // degree p
 	int q_degree{}; // degree q
 	std::vector<std::vector<Point3d>> controlPoints; // n + 1 by m + 1 matrix
-	std::vector<double> uKnots; // r = n + p + 1, p + 1 duplicates at each end
-	std::vector<double> vKnots; // q = m + q + 1, q + 1 duplicates at each end
+	std::vector<double> uKnots; // r == n + p + 1, p + 1 duplicates at each end
+	std::vector<double> vKnots; // q == m + q + 1, q + 1 duplicates at each end
 	std::vector<double> uBasis;
 	std::vector<double> vBasis;
 };

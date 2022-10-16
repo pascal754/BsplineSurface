@@ -41,9 +41,15 @@ void BsplineSurface::makeKnots(int size, int degree, std::vector<double>& knotVe
 
 int BsplineSurface::findKnotSpan(int size, int degree, double x, const std::vector<double>& knotVector) const
 {
+	if (knotVector.empty())
+	{
+		std::cerr << "findKnotSpan() knot vector is empty\n";
+		throw std::runtime_error("findKnotSpan() knot vector is empty");
+	}
+
 	if (x < knotVector.front() || x > knotVector.back())
 	{
-		std::cout << "findKnotSpan() x is outside of range\n";
+		std::cerr << "findKnotSpan() x is outside of range\n";
 		throw std::runtime_error("findKnotSpan() x is outside of range");
 	}
 
