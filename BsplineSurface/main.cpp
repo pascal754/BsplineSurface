@@ -11,6 +11,17 @@ import BsplineSurface;
 BsplineSurface bs00{ 3, 3 };
 double angle{};;
 
+void onMouseButton(int button, int state, int x, int y)
+{
+	std::cout << std::format("button: {}, state: {}, x: {}, y: {}\n", button, state, x, y);
+	
+}
+
+void onMouseDrag(int x, int y)
+{
+	std::cout << std::format("x: {}, y: {}\n", x, y);
+}
+
 void timer(int value)
 {
 	angle += 1.0;
@@ -54,20 +65,20 @@ void display()
 	glVertex3d(0.0f, 0.0f, 100.0f);
 	glEnd();
 
-	glBegin(GL_POINTS);
 	glColor3d(1.0f, 1.0f, 1.0f);
 	Point3d pt{};
 	for (double u{}; u <= 1.0; u += 0.01)
 	{
+		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
 		for (double v{}; v <= 1.0; v += 0.01)
 		{
 			bs00.surfacePoint(u, v, pt);
 			//std::cout << std::format("u: {:15.5f}, v: {:15.5f}, ({:15.5f}, {:15.5f}, {:15.5f})\n", u, v, pt.x, pt.y, pt.z);
 			glVertex3d(pt.x, pt.y, pt.z);
 		}
+		glEnd();
 	}
 
-	glEnd();
 
 	glutSwapBuffers();
 }
@@ -92,8 +103,10 @@ int main(int argc, char* argv[])
 		glutInit(&argc, argv);
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 		glutInitWindowSize(640, 480);
-		glutCreateWindow("Special key");
+		glutCreateWindow("B-spline Surface");
 		glutDisplayFunc(display);
+		glutMouseFunc(onMouseButton);
+		glutMotionFunc(onMouseDrag);
 		glutTimerFunc(0, timer, 0);
 		glutMainLoop();
 	}
