@@ -2,6 +2,9 @@ import <iostream>;
 import <vector>;
 import <format>;
 import <stdexcept>;
+import <array>;
+import <cmath>;
+import <numbers>;
 
 import Point3d;
 import BsplineSurface;
@@ -9,25 +12,78 @@ import BsplineSurface;
 #include <GL/glut.h>
 
 BsplineSurface bs00{ 3, 3 };
-double angle{};;
+double tractionAngle{};
+bool leftMouseButtonPressed{};
+int lastX{}, lastY{};
+double dx{}, dy{}, dz{};
+std::array<double, 3> currentVec, prevVec, rotationAxis;
+GLdouble mxTransform[4][4]{ {1.0, 0.0, 0.0, 0.0},{0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0} };
+
+void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
+{
+	double dis{}, a{};
+	std::array<int, 4> viewport;
+	glGetIntegerv(GL_VIEWPORT, viewport.data());
+
+	vec[0] = (2.0 * x - viewport[2]) / viewport[2];
+	vec[1] = (viewport[3] - 2.0 * y) / viewport[3];
+
+	dis = std::hypot(vec[0], vec[1]);
+	vec[2] = std::cos((std::numbers::pi / 2.0) * ((dis < 1.0) ? dis : 1.0));
+	a = std::hypot(vec[0], vec[1], vec[2]);
+
+	vec[0] /= a;
+	vec[1] /= a;
+	vec[2] /= a;
+	std::cout << std::format("viewport: {}, {}, {}, {}\n", viewport[0], viewport[1], viewport[2], viewport[3]);
+	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[0], vec[0]);
+}
 
 void onMouseButton(int button, int state, int x, int y)
 {
 	std::cout << std::format("button: {}, state: {}, x: {}, y: {}\n", button, state, x, y);
-	
+	if (button == 0 && state == 0) // left mouse button pressed
+	{
+		leftMouseButtonPressed = true;
+		ptTo3DVec(x, y, prevVec);
+	}
+	else
+	{
+		leftMouseButtonPressed = false;
+	}
 }
 
 void onMouseDrag(int x, int y)
 {
-	std::cout << std::format("x: {}, y: {}\n", x, y);
+	if (leftMouseButtonPressed)
+	{
+		ptTo3DVec(x, y, currentVec);
+		//std::cout << std::format("x: {}, y: {}\n", x, y);
+		dx = currentVec[0] - prevVec[0];
+		dy = currentVec[1] - prevVec[1];
+		dz = currentVec[2] - prevVec[2];
+
+		tractionAngle = 45.0 * std::hypot(dx, dy, dz);
+		std::cout << std::format("angle: {}, dx: {}, dy: {}, dz: {}\n", tractionAngle, dx, dy, dz);
+
+		rotationAxis[0] = prevVec[1] * currentVec[2] - prevVec[2] * currentVec[1];
+		rotationAxis[1] = prevVec[2] * currentVec[0] - prevVec[0] * currentVec[2];
+		rotationAxis[2] = prevVec[0] * currentVec[1] - prevVec[1] * currentVec[0];
+
+		std::cout << std::format("axis: {}, {}, {}\n", rotationAxis[0], rotationAxis[1], rotationAxis[2]);
+
+		prevVec = currentVec;
+
+		glutPostRedisplay();
+	}
 }
 
-void timer(int value)
-{
-	angle += 1.0;
-	glutTimerFunc(16, timer, 0);
-	glutPostRedisplay();
-}
+//void timer(int value)
+//{
+//	//angle += 1.0;
+//	glutTimerFunc(16, timer, 0);
+//	glutPostRedisplay();
+//}
 
 void display()
 {
@@ -44,28 +100,40 @@ void display()
 	glLoadIdentity();
 	gluLookAt(100, 100, 100, 0, 0, 0, 0, 0, 1);
 
-	glRotated(angle, 0, 0, 1);
+	if (leftMouseButtonPressed)
+	{
+		glPushMatrix();
 
-	srand(0);
+		glLoadIdentity();
+		glRotated(tractionAngle, rotationAxis[0], rotationAxis[1], rotationAxis[2]);
+		glMultMatrixd((GLdouble*)mxTransform);
+		glGetDoublev(GL_MODELVIEW_MATRIX, (GLdouble*)mxTransform);
+
+		glPopMatrix();
+	}
+
+	glMultMatrixd((GLdouble*)mxTransform);
+
+	//srand(0);
 	glBegin(GL_LINES);
 
 	// x-axis
-	glColor3d(1.0f, 0.0f, 0.0f);
-	glVertex3d(0.0f, 0.0f, 0.0f);
-	glVertex3d(100.0f, 0.0f, 0.0f);
+	glColor3d(1.0, 0.0, 0.0);
+	glVertex3d(0.0, 0.0, 0.0);
+	glVertex3d(100.0, 0.0, 0.0);
 
 	// y-axis
-	glColor3d(0.0f, 1.0f, 0.0f);
-	glVertex3d(0.0f, 0.0f, 0.0f);
-	glVertex3d(0.0f, 100.0f, 0.0f);
+	glColor3d(0.0, 1.0, 0.0);
+	glVertex3d(0.0, 0.0, 0.0);
+	glVertex3d(0.0, 100.0, 0.0);
 
 	// z-axis
-	glColor3d(0.0f, 0.0f, 1.0f);
-	glVertex3d(0.0f, 0.0f, 0.0f);
-	glVertex3d(0.0f, 0.0f, 100.0f);
+	glColor3d(0.0, 0.0, 1.0);
+	glVertex3d(0.0, 0.0, 0.0);
+	glVertex3d(0.0, 0.0, 100.0);
 	glEnd();
 
-	glColor3d(1.0f, 1.0f, 1.0f);
+	glColor3d(1.0, 1.0, 1.0);
 	Point3d pt{};
 	for (double u{}; u <= 1.0; u += 0.01)
 	{
@@ -100,6 +168,19 @@ int main(int argc, char* argv[])
 		bs00.addVector(vp4);
 		bs00.makeKnots();
 
+		/*mxTransform[0][0] = -0.7071;		mxTransform[0][1] = -0.5;
+		mxTransform[0][2] = 0.5;			mxTransform[0][3] = 0.0;
+
+		mxTransform[1][0] = 0.7071;		mxTransform[1][1] = -0.5;
+		mxTransform[1][2] = 0.5;			mxTransform[1][3] = 0.0;
+
+		mxTransform[2][0] = 0.0;			mxTransform[2][1] = 0.7071;
+		mxTransform[2][2] = 0.7071;		mxTransform[2][3] = 0.0;
+
+		mxTransform[3][0] = 0.0;			mxTransform[3][1] = 0.0;
+		mxTransform[3][2] = 0.0;			mxTransform[3][3] = 1.0;*/
+
+
 		glutInit(&argc, argv);
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 		glutInitWindowSize(640, 480);
@@ -107,7 +188,8 @@ int main(int argc, char* argv[])
 		glutDisplayFunc(display);
 		glutMouseFunc(onMouseButton);
 		glutMotionFunc(onMouseDrag);
-		glutTimerFunc(0, timer, 0);
+		//glutTimerFunc(0, timer, 0);
+		//glLoadIdentity();
 		glutMainLoop();
 	}
 	catch (const std::exception& e)
