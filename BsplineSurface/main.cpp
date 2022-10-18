@@ -21,22 +21,32 @@ GLdouble mxTransform[4][4]{ {1.0, 0.0, 0.0, 0.0},{0.0, 1.0, 0.0, 0.0}, {0.0, 0.0
 
 void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 {
-	double dis{}, a{};
-	std::array<int, 4> viewport;
-	glGetIntegerv(GL_VIEWPORT, viewport.data());
+	// x^2 + y^2 + z^2 == r^2, (r == 1)
 
-	vec[0] = (2.0 * x - viewport[2]) / viewport[2];
-	vec[1] = (viewport[3] - 2.0 * y) / viewport[3];
+	int w{ glutGet(GLUT_WINDOW_WIDTH) };
+	int h{ glutGet(GLUT_WINDOW_HEIGHT) };
+	std::cout << std::format("width: {}, heigh: {}\n", w, h);
 
-	dis = std::hypot(vec[0], vec[1]);
-	vec[2] = std::cos((std::numbers::pi / 2.0) * ((dis < 1.0) ? dis : 1.0));
-	a = std::hypot(vec[0], vec[1], vec[2]);
+	vec[0] = 2.0 * x / w - 1.0;
+	vec[1] = -2.0 * y / h + 1.0;
+	double hypot{ std::hypot(vec[0], vec[1])};
+
+	if (hypot <= 0.7071067) // x^2 + y^2 <= r^2 / 2
+	{
+		vec[2] = sqrt(1.0 - hypot * hypot);
+	}
+	else
+	{
+		vec[2] = 0.5 / hypot;
+	}
+
+	double a{ std::hypot(vec[0], vec[1], vec[2]) };
 
 	vec[0] /= a;
 	vec[1] /= a;
 	vec[2] /= a;
-	std::cout << std::format("viewport: {}, {}, {}, {}\n", viewport[0], viewport[1], viewport[2], viewport[3]);
-	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[0], vec[0]);
+
+	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[1], vec[2]);
 }
 
 void onMouseButton(int button, int state, int x, int y)
@@ -58,13 +68,11 @@ void onMouseDrag(int x, int y)
 	if (leftMouseButtonPressed)
 	{
 		ptTo3DVec(x, y, currentVec);
-		//std::cout << std::format("x: {}, y: {}\n", x, y);
-		dx = currentVec[0] - prevVec[0];
-		dy = currentVec[1] - prevVec[1];
-		dz = currentVec[2] - prevVec[2];
+		std::cout << std::format("x: {}, y: {}\n", x, y);
+		
 
-		tractionAngle = 45.0 * std::hypot(dx, dy, dz);
-		std::cout << std::format("angle: {}, dx: {}, dy: {}, dz: {}\n", tractionAngle, dx, dy, dz);
+		tractionAngle = 180 * std::acos(currentVec[0] * prevVec[0] + currentVec[1] * prevVec[1] + currentVec[2] * prevVec[2]) / std::numbers::pi;
+		std::cout << std::format("angle: {}\n", tractionAngle);
 
 		rotationAxis[0] = prevVec[1] * currentVec[2] - prevVec[2] * currentVec[1];
 		rotationAxis[1] = prevVec[2] * currentVec[0] - prevVec[0] * currentVec[2];
@@ -95,6 +103,7 @@ void display()
 	double w = glutGet(GLUT_WINDOW_WIDTH);
 	double h = glutGet(GLUT_WINDOW_HEIGHT);
 	gluPerspective(60.0, w / h, 0.1, 1000.0);
+	//glOrtho(-1000, 1000, -1000, 1000, 0.1, 1000);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -107,12 +116,12 @@ void display()
 		glLoadIdentity();
 		glRotated(tractionAngle, rotationAxis[0], rotationAxis[1], rotationAxis[2]);
 		glMultMatrixd((GLdouble*)mxTransform);
-		glGetDoublev(GL_MODELVIEW_MATRIX, (GLdouble*)mxTransform);
+		glGetDoublev(GL_MODELVIEW_MATRIX, &mxTransform[0][0]);
 
 		glPopMatrix();
 	}
 
-	glMultMatrixd((GLdouble*)mxTransform);
+	glMultMatrixd(&mxTransform[0][0]);
 
 	//srand(0);
 	glBegin(GL_LINES);
@@ -135,10 +144,10 @@ void display()
 
 	glColor3d(1.0, 1.0, 1.0);
 	Point3d pt{};
-	for (double u{}; u <= 1.0; u += 0.01)
+	for (double u{}; u <= 1.0; u += 0.05)
 	{
 		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
-		for (double v{}; v <= 1.0; v += 0.01)
+		for (double v{}; v <= 1.0; v += 0.05)
 		{
 			bs00.surfacePoint(u, v, pt);
 			//std::cout << std::format("u: {:15.5f}, v: {:15.5f}, ({:15.5f}, {:15.5f}, {:15.5f})\n", u, v, pt.x, pt.y, pt.z);
