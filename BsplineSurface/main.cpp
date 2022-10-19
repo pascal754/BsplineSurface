@@ -18,6 +18,7 @@ int lastX{}, lastY{};
 double dx{}, dy{}, dz{};
 std::array<double, 3> currentVec, prevVec, rotationAxis;
 GLdouble mxTransform[4][4]{ {1.0, 0.0, 0.0, 0.0},{0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0} };
+const double oneOverSquareRoot2{ 1.0 / sqrt(2.0) };
 
 void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 {
@@ -31,7 +32,7 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 	vec[1] = -2.0 * y / h + 1.0;
 	double hypot{ std::hypot(vec[0], vec[1])};
 
-	if (hypot <= 0.7071067) // x^2 + y^2 <= r^2 / 2
+	if (hypot <= oneOverSquareRoot2) // x^2 + y^2 <= r^2 / 2
 	{
 		vec[2] = sqrt(1.0 - hypot * hypot);
 	}
@@ -40,11 +41,14 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 		vec[2] = 0.5 / hypot;
 	}
 
-	double a{ std::hypot(vec[0], vec[1], vec[2]) };
+	//vec[2] = cos((std::numbers::pi / 2.0) * ((hypot < 1.0) ? hypot : 1.0));
 
-	vec[0] /= a;
-	vec[1] /= a;
-	vec[2] /= a;
+
+	hypot = std::hypot(vec[0], vec[1], vec[2]);
+
+	vec[0] /= hypot;
+	vec[1] /= hypot;
+	vec[2] /= hypot;
 
 	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[1], vec[2]);
 }
@@ -102,21 +106,21 @@ void display()
 	glLoadIdentity();
 	double w = glutGet(GLUT_WINDOW_WIDTH);
 	double h = glutGet(GLUT_WINDOW_HEIGHT);
-	gluPerspective(60.0, w / h, 0.1, 1000.0);
-	//glOrtho(-1000, 1000, -1000, 1000, 0.1, 1000);
+	//gluPerspective(60.0, w / h, 0.1, 1000.0);
+	glOrtho(-150, 150, -150, 150, -150, 150);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(100, 100, 100, 0, 0, 0, 0, 0, 1);
+	//gluLookAt(100, 100, 100, 0, 0, 0, 0, 0, 1);
 
 	if (leftMouseButtonPressed)
 	{
 		glPushMatrix();
 
-		glLoadIdentity();
-		glRotated(tractionAngle, rotationAxis[0], rotationAxis[1], rotationAxis[2]);
-		glMultMatrixd((GLdouble*)mxTransform);
-		glGetDoublev(GL_MODELVIEW_MATRIX, &mxTransform[0][0]);
+			glLoadIdentity();
+			glRotated(tractionAngle, rotationAxis[0], rotationAxis[1], rotationAxis[2]);
+			glMultMatrixd(&mxTransform[0][0]);
+			glGetDoublev(GL_MODELVIEW_MATRIX, &mxTransform[0][0]);
 
 		glPopMatrix();
 	}
@@ -126,33 +130,45 @@ void display()
 	//srand(0);
 	glBegin(GL_LINES);
 
-	// x-axis
-	glColor3d(1.0, 0.0, 0.0);
-	glVertex3d(0.0, 0.0, 0.0);
-	glVertex3d(100.0, 0.0, 0.0);
+		// x-axis
+		glColor3d(1.0, 0.0, 0.0);
+		glVertex3d(0.0, 0.0, 0.0);
+		glVertex3d(100.0, 0.0, 0.0);
+	
+		// y-axis
+		glColor3d(0.0, 1.0, 0.0);
+		glVertex3d(0.0, 0.0, 0.0);
+		glVertex3d(0.0, 100.0, 0.0);
 
-	// y-axis
-	glColor3d(0.0, 1.0, 0.0);
-	glVertex3d(0.0, 0.0, 0.0);
-	glVertex3d(0.0, 100.0, 0.0);
-
-	// z-axis
-	glColor3d(0.0, 0.0, 1.0);
-	glVertex3d(0.0, 0.0, 0.0);
-	glVertex3d(0.0, 0.0, 100.0);
+		// z-axis
+		glColor3d(0.0, 0.0, 1.0);
+		glVertex3d(0.0, 0.0, 0.0);
+		glVertex3d(0.0, 0.0, 100.0);
 	glEnd();
+
+	double modelMatrix[16];
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+	double tx = 100 * modelMatrix[0] + modelMatrix[12];
+	double ty = 100 * modelMatrix[1] + modelMatrix[13];
+	double tz = 100 * modelMatrix[2] + modelMatrix[14];
+
+	glPushMatrix();
+		glLoadIdentity();
+		glTranslated(tx, ty, tz);
+		glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, 'x');
+	glPopMatrix();
 
 	glColor3d(1.0, 1.0, 1.0);
 	Point3d pt{};
 	for (double u{}; u <= 1.0; u += 0.05)
 	{
 		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
-		for (double v{}; v <= 1.0; v += 0.05)
-		{
-			bs00.surfacePoint(u, v, pt);
-			//std::cout << std::format("u: {:15.5f}, v: {:15.5f}, ({:15.5f}, {:15.5f}, {:15.5f})\n", u, v, pt.x, pt.y, pt.z);
-			glVertex3d(pt.x, pt.y, pt.z);
-		}
+			for (double v{}; v <= 1.0; v += 0.05)
+			{
+				bs00.surfacePoint(u, v, pt);
+				//std::cout << std::format("u: {:15.5f}, v: {:15.5f}, ({:15.5f}, {:15.5f}, {:15.5f})\n", u, v, pt.x, pt.y, pt.z);
+				glVertex3d(pt.x, pt.y, pt.z);
+			}
 		glEnd();
 	}
 
@@ -177,22 +193,9 @@ int main(int argc, char* argv[])
 		bs00.addVector(vp4);
 		bs00.makeKnots();
 
-		/*mxTransform[0][0] = -0.7071;		mxTransform[0][1] = -0.5;
-		mxTransform[0][2] = 0.5;			mxTransform[0][3] = 0.0;
-
-		mxTransform[1][0] = 0.7071;		mxTransform[1][1] = -0.5;
-		mxTransform[1][2] = 0.5;			mxTransform[1][3] = 0.0;
-
-		mxTransform[2][0] = 0.0;			mxTransform[2][1] = 0.7071;
-		mxTransform[2][2] = 0.7071;		mxTransform[2][3] = 0.0;
-
-		mxTransform[3][0] = 0.0;			mxTransform[3][1] = 0.0;
-		mxTransform[3][2] = 0.0;			mxTransform[3][3] = 1.0;*/
-
-
 		glutInit(&argc, argv);
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-		glutInitWindowSize(640, 480);
+		glutInitWindowSize(600, 600);
 		glutCreateWindow("B-spline Surface");
 		glutDisplayFunc(display);
 		glutMouseFunc(onMouseButton);
