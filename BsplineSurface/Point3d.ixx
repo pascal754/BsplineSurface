@@ -1,3 +1,6 @@
+// October 14, 2022
+// by SM
+
 export module Point3d;
 
 export struct Point3d {

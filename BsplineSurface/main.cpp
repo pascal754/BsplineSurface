@@ -1,3 +1,6 @@
+// October 14, 2022
+// by SM
+
 import <iostream>;
 import <vector>;
 import <format>;
@@ -6,18 +9,23 @@ import <array>;
 import <cmath>;
 import <numbers>;
 
+#include <GL/glut.h>
+
 import Point3d;
 import BsplineSurface;
 
-#include <GL/glut.h>
 
 BsplineSurface bs00{ 3, 3 };
 double tractionAngle{};
 bool leftMouseButtonPressed{};
+bool rightMouseButtonPressed{};
 int lastX{}, lastY{};
-double dx{}, dy{}, dz{};
-std::array<double, 3> currentVec, prevVec, rotationAxis;
-GLdouble mxTransform[4][4]{ {1.0, 0.0, 0.0, 0.0},{0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0} };
+double zoomScale{ 150.0 };
+double aspectRatio{ 1.0 };
+double xTranslation{}, yTranslation{};
+double sNear{ -150.0 }, sFar{ 150.0 };
+std::array<double, 3> currentVec{}, prevVec{}, rotationAxis{};
+GLdouble mxTransform[4][4]{ {-0.7071, -0.5, 0.5, 0.0}, {0.7071, -0.5, 0.5, 0.0}, {0.0, 0.7071, 0.7071, 0.0}, {0.0, 0.0, 0.0, 1.0} }; // isometric view
 const double oneOverSquareRoot2{ 1.0 / sqrt(2.0) };
 
 void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
@@ -34,15 +42,12 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 
 	if (hypot <= oneOverSquareRoot2) // x^2 + y^2 <= r^2 / 2
 	{
-		vec[2] = sqrt(1.0 - hypot * hypot);
+		vec[2] = sqrt(1.0 - hypot * hypot); // z == sqrt(r^2 - (x^2 + y^2))
 	}
 	else
 	{
-		vec[2] = 0.5 / hypot;
+		vec[2] = 0.5 / hypot; // z == (r^2 / 2) / sqrt(x^2 + y^2)
 	}
-
-	//vec[2] = cos((std::numbers::pi / 2.0) * ((hypot < 1.0) ? hypot : 1.0));
-
 
 	hypot = std::hypot(vec[0], vec[1], vec[2]);
 
@@ -53,6 +58,31 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[1], vec[2]);
 }
 
+void onKeyStroke(unsigned char key, int x, int y)
+{
+	if (key == 'r' || key == 'R')
+	{
+		zoomScale = 150.0;
+		mxTransform[0][0] = -0.7071;
+		mxTransform[0][1] = -0.5;
+		mxTransform[0][2] = 0.5;
+		mxTransform[0][3] = 0.0;
+		mxTransform[1][0] = 0.7071;
+		mxTransform[1][1] = -0.5;
+		mxTransform[1][2] = 0.5;
+		mxTransform[1][3] = 0.0;
+		mxTransform[2][0] = 0.0;
+		mxTransform[2][1] = 0.7071;
+		mxTransform[2][2] = 0.7071;
+		mxTransform[2][3] = 0.0;
+		mxTransform[3][0] = 0.0;
+		mxTransform[3][1] = 0.0;
+		mxTransform[3][2] = 0.0;
+		mxTransform[3][3] = 1.0;
+		xTranslation = yTranslation = 0.0;
+		glutPostRedisplay();
+	}
+}
 void onMouseButton(int button, int state, int x, int y)
 {
 	std::cout << std::format("button: {}, state: {}, x: {}, y: {}\n", button, state, x, y);
@@ -61,9 +91,31 @@ void onMouseButton(int button, int state, int x, int y)
 		leftMouseButtonPressed = true;
 		ptTo3DVec(x, y, prevVec);
 	}
-	else
+	else if (button == 0 && state == 1) // left mouse button released
 	{
 		leftMouseButtonPressed = false;
+	}
+	else if (button == 2 && state == 0) // right mouse button pressed
+	{
+		rightMouseButtonPressed = true;
+		lastX = x;
+		lastY = y;
+	}
+	else if (button == 2 && state == 1) // right mouse button released
+	{
+		rightMouseButtonPressed = false;
+	}
+	else if (button == 3 && state == 0) // scroll forward
+	{
+		std::cout << "scroll forward\n";
+		zoomScale *= 0.9;
+		glutPostRedisplay();
+	}
+	else if (button == 4 && state == 0) // scroll backward
+	{
+		std::cout << "scroll backward\n";
+		zoomScale *= 1.1;
+		glutPostRedisplay();
 	}
 }
 
@@ -74,8 +126,9 @@ void onMouseDrag(int x, int y)
 		ptTo3DVec(x, y, currentVec);
 		std::cout << std::format("x: {}, y: {}\n", x, y);
 		
-
-		tractionAngle = 180 * std::acos(currentVec[0] * prevVec[0] + currentVec[1] * prevVec[1] + currentVec[2] * prevVec[2]) / std::numbers::pi;
+		double innerProduct{ currentVec[0] * prevVec[0] + currentVec[1] * prevVec[1] + currentVec[2] * prevVec[2] };
+		innerProduct = std::min(innerProduct, 1.0);
+		tractionAngle = 180 * std::acos(innerProduct) / std::numbers::pi; // in degree
 		std::cout << std::format("angle: {}\n", tractionAngle);
 
 		rotationAxis[0] = prevVec[1] * currentVec[2] - prevVec[2] * currentVec[1];
@@ -88,14 +141,22 @@ void onMouseDrag(int x, int y)
 
 		glutPostRedisplay();
 	}
+	else if (rightMouseButtonPressed)
+	{
+		xTranslation += static_cast<double>(lastX - x) * 2.0 * zoomScale / glutGet(GLUT_WINDOW_WIDTH);
+		yTranslation += static_cast<double>(y - lastY) * 2.0 * zoomScale / glutGet(GLUT_WINDOW_HEIGHT);
+		std::cout << std::format("xTranlation: {}, yTranslation: {}\n", xTranslation, yTranslation);
+		lastX = x;
+		lastY = y;
+		glutPostRedisplay();
+	}
 }
 
-//void timer(int value)
-//{
-//	//angle += 1.0;
-//	glutTimerFunc(16, timer, 0);
-//	glutPostRedisplay();
-//}
+void reshape(int x, int y)
+{
+	aspectRatio =  static_cast<double>(y) / x; // the inverse of aspect ratio
+	glViewport(0, 0, x, y);
+}
 
 void display()
 {
@@ -107,7 +168,9 @@ void display()
 	double w = glutGet(GLUT_WINDOW_WIDTH);
 	double h = glutGet(GLUT_WINDOW_HEIGHT);
 	//gluPerspective(60.0, w / h, 0.1, 1000.0);
-	glOrtho(-150, 150, -150, 150, -150, 150);
+	
+
+	glOrtho(-zoomScale + xTranslation, zoomScale + xTranslation, -zoomScale * aspectRatio + yTranslation, zoomScale * aspectRatio + yTranslation, sNear, sFar);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -127,7 +190,6 @@ void display()
 
 	glMultMatrixd(&mxTransform[0][0]);
 
-	//srand(0);
 	glBegin(GL_LINES);
 
 		// x-axis
@@ -146,16 +208,43 @@ void display()
 		glVertex3d(0.0, 0.0, 100.0);
 	glEnd();
 
-	double modelMatrix[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
-	double tx = 100 * modelMatrix[0] + modelMatrix[12];
-	double ty = 100 * modelMatrix[1] + modelMatrix[13];
-	double tz = 100 * modelMatrix[2] + modelMatrix[14];
+	double tx{ 100.0 * mxTransform[0][0] + mxTransform[3][0] };
+	double ty{ 100.0 * mxTransform[0][1] + mxTransform[3][1] };
+	double tz{ 100.0 * mxTransform[0][2] + mxTransform[3][2] };
+
+	glColor3d(1.0, 0.0, 0.0);
 
 	glPushMatrix();
 		glLoadIdentity();
 		glTranslated(tx, ty, tz);
+		glScaled(0.1, 0.1, 0.1);
 		glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, 'x');
+	glPopMatrix();
+
+	tx = 100.0 * mxTransform[1][0] + mxTransform[3][0];
+	ty = 100.0 * mxTransform[1][1] + mxTransform[3][1];
+	tz = 100.0 * mxTransform[1][2] + mxTransform[3][2];
+
+	glColor3d(0.0, 1.0, 0.0);
+
+	glPushMatrix();
+		glLoadIdentity();
+		glTranslated(tx, ty, tz);
+		glScaled(0.1, 0.1, 0.1);
+		glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, 'y');
+	glPopMatrix();
+
+	glColor3d(0.0, 0.0, 1.0);
+
+	tx = 100.0 * mxTransform[2][0] + mxTransform[3][0];
+	ty = 100.0 * mxTransform[2][1] + mxTransform[3][1];
+	tz = 100.0 * mxTransform[2][2] + mxTransform[3][2];
+
+	glPushMatrix();
+		glLoadIdentity();
+		glTranslated(tx, ty, tz);
+		glScaled(0.1, 0.1, 0.1);
+		glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, 'z');
 	glPopMatrix();
 
 	glColor3d(1.0, 1.0, 1.0);
@@ -171,7 +260,6 @@ void display()
 			}
 		glEnd();
 	}
-
 
 	glutSwapBuffers();
 }
@@ -198,10 +286,10 @@ int main(int argc, char* argv[])
 		glutInitWindowSize(600, 600);
 		glutCreateWindow("B-spline Surface");
 		glutDisplayFunc(display);
+		glutReshapeFunc(reshape);
 		glutMouseFunc(onMouseButton);
 		glutMotionFunc(onMouseDrag);
-		//glutTimerFunc(0, timer, 0);
-		//glLoadIdentity();
+		glutKeyboardFunc(onKeyStroke);
 		glutMainLoop();
 	}
 	catch (const std::exception& e)
