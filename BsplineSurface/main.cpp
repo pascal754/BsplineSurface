@@ -14,16 +14,16 @@ import <numbers>;
 import Point3d;
 import BsplineSurface;
 
-
+const double LENGTH{ 150.0 };
 BsplineSurface bs00{ 3, 3 };
 double tractionAngle{};
 bool leftMouseButtonPressed{};
 bool rightMouseButtonPressed{};
 int lastX{}, lastY{};
-double zoomScale{ 150.0 };
+double zoomScale{ LENGTH };
 double aspectRatio{ 1.0 };
 double xTranslation{}, yTranslation{};
-double sNear{ -150.0 }, sFar{ 150.0 };
+double sNear{ -LENGTH }, sFar{ LENGTH };
 std::array<double, 3> currentVec{}, prevVec{}, rotationAxis{};
 GLdouble mxTransform[4][4]{ {-0.7071, -0.5, 0.5, 0.0}, {0.7071, -0.5, 0.5, 0.0}, {0.0, 0.7071, 0.7071, 0.0}, {0.0, 0.0, 0.0, 1.0} }; // isometric view
 const double oneOverSquareRoot2{ 1.0 / sqrt(2.0) };
@@ -34,7 +34,7 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 
 	int w{ glutGet(GLUT_WINDOW_WIDTH) };
 	int h{ glutGet(GLUT_WINDOW_HEIGHT) };
-	std::cout << std::format("width: {}, heigh: {}\n", w, h);
+	//std::cout << std::format("width: {}, heigh: {}\n", w, h);
 
 	vec[0] = 2.0 * x / w - 1.0;
 	vec[1] = -2.0 * y / h + 1.0;
@@ -55,14 +55,14 @@ void ptTo3DVec(int x, int y, std::array<double, 3>& vec)
 	vec[1] /= hypot;
 	vec[2] /= hypot;
 
-	std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[1], vec[2]);
+	//std::cout << std::format("vector: {}, {}, {}\n", vec[0], vec[1], vec[2]);
 }
 
 void onKeyStroke(unsigned char key, int x, int y)
 {
 	if (key == 'r' || key == 'R')
 	{
-		zoomScale = 150.0;
+		zoomScale = LENGTH;
 		mxTransform[0][0] = -0.7071;
 		mxTransform[0][1] = -0.5;
 		mxTransform[0][2] = 0.5;
@@ -85,7 +85,7 @@ void onKeyStroke(unsigned char key, int x, int y)
 }
 void onMouseButton(int button, int state, int x, int y)
 {
-	std::cout << std::format("button: {}, state: {}, x: {}, y: {}\n", button, state, x, y);
+	//std::cout << std::format("button: {}, state: {}, x: {}, y: {}\n", button, state, x, y);
 	if (button == 0 && state == 0) // left mouse button pressed
 	{
 		leftMouseButtonPressed = true;
@@ -107,13 +107,13 @@ void onMouseButton(int button, int state, int x, int y)
 	}
 	else if (button == 3 && state == 0) // scroll forward
 	{
-		std::cout << "scroll forward\n";
+		//std::cout << "scroll forward\n";
 		zoomScale *= 0.9;
 		glutPostRedisplay();
 	}
 	else if (button == 4 && state == 0) // scroll backward
 	{
-		std::cout << "scroll backward\n";
+		//std::cout << "scroll backward\n";
 		zoomScale *= 1.1;
 		glutPostRedisplay();
 	}
@@ -124,18 +124,18 @@ void onMouseDrag(int x, int y)
 	if (leftMouseButtonPressed)
 	{
 		ptTo3DVec(x, y, currentVec);
-		std::cout << std::format("x: {}, y: {}\n", x, y);
+		//std::cout << std::format("x: {}, y: {}\n", x, y);
 		
 		double innerProduct{ currentVec[0] * prevVec[0] + currentVec[1] * prevVec[1] + currentVec[2] * prevVec[2] };
 		innerProduct = std::min(innerProduct, 1.0);
 		tractionAngle = 180 * std::acos(innerProduct) / std::numbers::pi; // in degree
-		std::cout << std::format("angle: {}\n", tractionAngle);
+		//std::cout << std::format("angle: {}\n", tractionAngle);
 
 		rotationAxis[0] = prevVec[1] * currentVec[2] - prevVec[2] * currentVec[1];
 		rotationAxis[1] = prevVec[2] * currentVec[0] - prevVec[0] * currentVec[2];
 		rotationAxis[2] = prevVec[0] * currentVec[1] - prevVec[1] * currentVec[0];
 
-		std::cout << std::format("axis: {}, {}, {}\n", rotationAxis[0], rotationAxis[1], rotationAxis[2]);
+		//std::cout << std::format("axis: {}, {}, {}\n", rotationAxis[0], rotationAxis[1], rotationAxis[2]);
 
 		prevVec = currentVec;
 
@@ -145,7 +145,7 @@ void onMouseDrag(int x, int y)
 	{
 		xTranslation += static_cast<double>(lastX - x) * 2.0 * zoomScale / glutGet(GLUT_WINDOW_WIDTH);
 		yTranslation += static_cast<double>(y - lastY) * 2.0 * zoomScale / glutGet(GLUT_WINDOW_HEIGHT);
-		std::cout << std::format("xTranlation: {}, yTranslation: {}\n", xTranslation, yTranslation);
+		//std::cout << std::format("xTranlation: {}, yTranslation: {}\n", xTranslation, yTranslation);
 		lastX = x;
 		lastY = y;
 		glutPostRedisplay();
