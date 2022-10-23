@@ -3,7 +3,7 @@ Display B-spline surface using OpenGL
 
 Usage:
 
-drag with left mouse button: ratation
+drag with left mouse button: rotation
 
 drag with right mouse button: translation
 
