@@ -12,7 +12,7 @@ import <numbers>;
 #include <GL/glut.h>
 //#include <glm/geometric.hpp>
 
-import Point3d;
+import Point3D;
 import BsplineSurface;
 
 struct graphics
@@ -255,7 +255,7 @@ void display()
 	glPopMatrix();
 
 	glColor3d(1.0, 1.0, 1.0);
-	Point3d pt{};
+	Point3D pt{};
 	for (double u{}; u <= 1.0; u += 0.05)
 	{
 		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
@@ -275,11 +275,11 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		std::vector<Point3d> vp0{ {50, -30, 10}, {20, -30, 10}, {0, -30, 30}, {-20, -30, 30} };
-		std::vector<Point3d> vp1{ {50, 10, 10}, {20, 10, 10}, {0, 10, 30}, {-20, 10, 30} };
-		std::vector<Point3d> vp2{ {50, 30, 0}, {20, 30, 0}, {0, 30, 10}, {-20, 30, 10} };
-		std::vector<Point3d> vp3{ {50, 50, 0 }, { 20, 50, 0 }, {0, 50, 10}, {-20, 50, 10} };
-		std::vector<Point3d> vp4{ {50, 60, 0}, {20, 60, 0}, {0, 60, 10}, {-20, 60, 10} };
+		std::vector<Point3D> vp0{ {50, -30, 10}, {20, -30, 10}, {0, -30, 30}, {-20, -30, 30} };
+		std::vector<Point3D> vp1{ {50, 10, 10}, {20, 10, 10}, {0, 10, 30}, {-20, 10, 30} };
+		std::vector<Point3D> vp2{ {50, 30, 0}, {20, 30, 0}, {0, 30, 10}, {-20, 30, 10} };
+		std::vector<Point3D> vp3{ {50, 50, 0 }, { 20, 50, 0 }, {0, 50, 10}, {-20, 50, 10} };
+		std::vector<Point3D> vp4{ {50, 60, 0}, {20, 60, 0}, {0, 60, 10}, {-20, 60, 10} };
 
 		bs00.addVector(vp0);
 		bs00.addVector(vp1);

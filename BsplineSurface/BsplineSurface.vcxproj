@@ -162,7 +162,7 @@
     <ClCompile Include="BsplineSurface.cpp" />
     <ClCompile Include="BsplineSurface.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Point3d.ixx" />
+    <ClCompile Include="Point3D.ixx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

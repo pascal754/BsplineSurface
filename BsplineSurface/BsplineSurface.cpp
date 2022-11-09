@@ -103,7 +103,7 @@ void BsplineSurface::basisFuns(int span, double x, int degree, std::vector<doubl
 }
 
 // algorithm A3.5 pp. 103
-void BsplineSurface::surfacePoint(double u, double v, Point3d& S)
+void BsplineSurface::surfacePoint(double u, double v, Point3D& S)
 {
 	// add num check
 
@@ -112,7 +112,7 @@ void BsplineSurface::surfacePoint(double u, double v, Point3d& S)
 	int vspan{ findKnotSpan(static_cast<int>(std::ssize(controlPoints.front())), q_degree, v, vKnots) };
 	basisFuns(vspan, v, q_degree, vKnots, vBasis);
 
-	std::vector<Point3d> temp(q_degree + 1);
+	std::vector<Point3D> temp(q_degree + 1);
 
 	for (int L{}; L <= q_degree; ++L)
 	{
@@ -134,7 +134,7 @@ void BsplineSurface::surfacePoint(double u, double v, Point3d& S)
 	}
 }
 
-void BsplineSurface::addVector(const std::vector<Point3d>& vPt)
+void BsplineSurface::addVector(const std::vector<Point3D>& vPt)
 {
 	controlPoints.push_back(vPt);
 }
