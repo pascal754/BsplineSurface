@@ -10,6 +10,7 @@ import <cmath>;
 import <numbers>;
 
 #include <GL/glut.h>
+//#include <glm/geometric.hpp>
 
 import Point3d;
 import BsplineSurface;
@@ -281,11 +282,11 @@ int main(int argc, char* argv[])
 		std::vector<Point3d> vp4{ {50, 60, 0}, {20, 60, 0}, {0, 60, 10}, {-20, 60, 10} };
 
 		bs00.addVector(vp0);
+		bs00.addVector(vp1);
 		bs00.addVector(vp2);
 		bs00.addVector(vp3);
 		bs00.addVector(vp4);
 		bs00.makeKnots();
-		bs00.addVector(vp1);
 
 		glutInit(&argc, argv);
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
