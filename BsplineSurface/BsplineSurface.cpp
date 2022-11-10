@@ -123,14 +123,15 @@ void BsplineSurface::surfacePoint(double u, double v, Point3D& S)
 			temp[L].y += uBasis[k] * controlPoints[uspan - p_degree + k][vspan - q_degree + L].y;
 			temp[L].z += uBasis[k] * controlPoints[uspan - p_degree + k][vspan - q_degree + L].z;
 		}
+	}
 
-		S.x = S.y = S.z = 0.0;
-		for (int L{}; L <= q_degree; ++L)
-		{
-			S.x += vBasis[L] * temp[L].x;
-			S.y += vBasis[L] * temp[L].y;
-			S.z += vBasis[L] * temp[L].z;
-		}
+	S.x = S.y = S.z = 0.0;
+
+	for (int L{}; L <= q_degree; ++L)
+	{
+		S.x += vBasis[L] * temp[L].x;
+		S.y += vBasis[L] * temp[L].y;
+		S.z += vBasis[L] * temp[L].z;
 	}
 }
 
