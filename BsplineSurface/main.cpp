@@ -256,6 +256,7 @@ void display()
 
 	glColor3d(1.0, 1.0, 1.0);
 	Point3D pt{};
+
 	for (double u{}; u <= 1.0; u += 0.05)
 	{
 		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
@@ -265,6 +266,17 @@ void display()
 				//std::cout << std::format("u: {:15.5f}, v: {:15.5f}, ({:15.5f}, {:15.5f}, {:15.5f})\n", u, v, pt.x, pt.y, pt.z);
 				glVertex3d(pt.x, pt.y, pt.z);
 			}
+		glEnd();
+	}
+
+	for (double u{}; u <= 1.0; u += 0.05)
+	{
+		glBegin(GL_LINE_STRIP); // glBegin(GL_POINTS);
+		for (double v{}; v <= 1.0; v += 0.05)
+		{
+			bs00.surfacePoint(v, u, pt);
+			glVertex3d(pt.x, pt.y, pt.z);
+		}
 		glEnd();
 	}
 
